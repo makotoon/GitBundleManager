@@ -1,0 +1,1 @@
+# git_bundle_manager
