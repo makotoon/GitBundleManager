@@ -1,0 +1,26 @@
+{
+    "config_common":{
+        "batch_output"  : "./bat_out",
+        "my_repo"       : "repo1",
+        "git_path"      : "C:/Program Files/Git/bin/git.exe",
+        "git_option"    : "-C",
+        "bundle_output" : "C:/data/repo/git/bundle/out",
+        "bundle_option" : "--since=30.days",
+        "merge_input"   : "C:/data/repo/git/bundle/in",
+        "merge_option"  : ""
+    },
+    "config_detail": {
+        "repo1" : {
+            "path"            : "C:/data/repo/git/my_repo1",
+            "repository_name" : "my_repository1",
+            "target_branch"   : "master",
+            "branch_origin"   : ""
+        },
+        "repo2": {
+            "path"            : "C:/data/repo/git/my_repo2",
+            "repository_name" : "my_repository2",
+            "target_branch"   : "feature/func_abc",
+            "branch_origin"   : ""
+        }
+    }
+}
