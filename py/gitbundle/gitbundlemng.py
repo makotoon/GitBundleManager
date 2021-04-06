@@ -70,6 +70,15 @@ class gitbundlemng:
 
         for cfg in self._cfg['config_detail'].keys():
             fo.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
+            
+            fo.write('@rem # Switch branch\n')
+            fo.write('\"{0}\" {1} {2} checkout {3} \n'.format( 
+                                                       self._cfg['config_common']['git_path'] , 
+                                                       self._cfg['config_common']['git_option'],
+                                                       self._cfg['config_detail'][cfg]['path'],
+                                                       self._cfg['config_detail'][cfg]['target_branch']
+                                                     ))
+
             fo.write('@rem # Pull remote repository updates\n')
             fo.write('\"{0}\" {1} {2} pull \n'.format( 
                                                        self._cfg['config_common']['git_path'] , 
@@ -233,6 +242,10 @@ class gitbundlemng:
         bundle_info = {}
         
         bundle_name_sp = re.match('(.*).bundle', bundle_name).split('@')
+
+        assert len(bundle_name_sp)    == 4,  'Illegal bundle file name (1)'
+        assert len(bundle_name_sp[3]) == 12, 'Illegal bundle file name (2)'
+
         bundle_info['repository_name'] = bundle_name_sp[0]
         bundle_info['branch_name']     = bundle_name_sp[1].replace('+', '/')
         bundle_info['branch_origin']   = bundle_name_sp[2]
