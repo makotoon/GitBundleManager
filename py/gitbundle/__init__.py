@@ -23,7 +23,7 @@
 # ======================================================================================
 
 __copyright__   = '(C) 2021 Makoto Maeda'
-__version__     = '0.0.1'
+__version__     = '0.0.2rc1'
 __license__     = 'MIT (https://opensource.org/licenses/MIT)'
 __author__      = 'Makoto Maeda'
 __url__         = 'https://github.com/makotoon/git_bundle_manager'
