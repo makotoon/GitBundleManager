@@ -53,6 +53,7 @@ class gitbundlemng:
         # Read json configurations file specified by the first argument
         f = open(cfg_file, 'r')
         self._cfg = json.load(f)
+        f.close()
 
 
     def create_batch(self):
@@ -69,28 +70,25 @@ class gitbundlemng:
         gbr=gitbundle.gitrepo()
 
         for cfg in self._cfg['config_detail'].keys():
+            ### Bundle output batch generation 
             fo.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
             
-            fo.write('@rem # Switch branch\n')
+
             fo.write('\"{0}\" {1} {2} checkout {3} \n'.format( 
-                                                       self._cfg['config_common']['git_path'] , 
-                                                       self._cfg['config_common']['git_option'],
-                                                       self._cfg['config_detail'][cfg]['path'],
-                                                       self._cfg['config_detail'][cfg]['target_branch']
-                                                     ))
+                                                              self._cfg['config_common']['git_path'] , 
+                                                              self._cfg['config_common']['git_option'],
+                                                              self._cfg['config_detail'][cfg]['path'],
+                                                              self._cfg['config_detail'][cfg]['target_branch']
+                                                             ))
 
-            fo.write('@rem # Pull remote repository updates\n')
             fo.write('\"{0}\" {1} {2} pull \n'.format( 
-                                                       self._cfg['config_common']['git_path'] , 
-                                                       self._cfg['config_common']['git_option'],
-                                                       self._cfg['config_detail'][cfg]['path']
+                                                      self._cfg['config_common']['git_path'] , 
+                                                      self._cfg['config_common']['git_option'],
+                                                      self._cfg['config_detail'][cfg]['path']
                                                      ))
-
-            fo.write('@rem # Create bundle for branch {0}\n'.format(
-                                                                    self._cfg['config_detail'][cfg]['target_branch']
-                                                                    ))
-
-            bundle_name   =  self.make_bundlename(self._cfg['config_detail'][cfg]['repository_name'], 
+                                                     
+            bundle_name   =  self.make_bundlename(
+                                                  self._cfg['config_detail'][cfg]['repository_name'], 
                                                   self._cfg['config_detail'][cfg]['target_branch'],
                                                   gbr.find_branch_origin( self._cfg['config_detail'][cfg]['path'] , 
                                                                           self._cfg['config_detail'][cfg]['target_branch'] ))
@@ -105,46 +103,63 @@ class gitbundlemng:
                                                                                  self._cfg['config_detail'][cfg]['target_branch']
                                                                                  ))
 
-            """
-            # TODO : to be implemented. need to parse bundle file name.
+            
+            ### Bundle input batch generation 
+            bundle_info_list = self.get_bundle_list(self._cfg['config_common']['merge_input'])
 
-            fi.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
-            fi.write('@rem # Pull remote repository updates\n')
-            fi.write('\"{0}\" {1} {2} pull \n'.format( 
-                                                      self._cfg['config_common']['git_path'] , 
-                                                      self._cfg['config_common']['git_option'],
-                                                      self._cfg['config_detail'][cfg]['path']
-                                                     ))
+            for bundle_info in bundle_info_list:
+                # Create and switch to the branch to modify if the branch doesn't exist. Just switch otherwise.
+                if gbr.find_branch(self._cfg['config_detail'][cfg]['path'], bundle_info['branch_name']):
+                    fi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
+                                                                     self._cfg['config_common']['git_path'] , 
+                                                                     self._cfg['config_common']['git_option'],
+                                                                     self._cfg['config_detail'][cfg]['path'],
+                                                                     bundle_info['branch_name']
+                                                                    ))
+                else:
+                    fi.write('\"{0}\" {1} {2} checkout {3} -b {4} \n'.format( 
+                                                                             self._cfg['config_common']['git_path'] , 
+                                                                             self._cfg['config_common']['git_option'],
+                                                                             self._cfg['config_detail'][cfg]['path'],
+                                                                             bundle_info['branch_origin'],
+                                                                             bundle_info['branch_name']
+                                                                            ))
 
-            fi.write('@rem # Switch to branch {0}\n'.format(
-                                                             self._cfg['config_detail'][cfg]['target_branch']
-                                                            ))
+                # fetch bundle content 
+                fi.write('\"{0}\" {1} {2} fetch {3} {4}/{5}.bundle HEAD\n'.format( 
+                                                                                  self._cfg['config_common']['git_path'] , 
+                                                                                  self._cfg['config_common']['git_option'],
+                                                                                  self._cfg['config_detail'][cfg]['path'],
+                                                                                  self._cfg['config_common']['merge_input'],
+                                                                                  self._cfg['config_detail'][cfg]['repository_name'], 
+                                                                                  self._cfg['config_detail'][cfg]['target_branch'],
+                                                                                  bundle_info['file_name']
+                                                                                 ))
+                                                                                   
+                # merge bundle content
+                fi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
+                                                                      self._cfg['config_common']['git_path'] , 
+                                                                      self._cfg['config_common']['git_option'],
+                                                                      self._cfg['config_detail'][cfg]['path'],
+                                                                      self._cfg['config_common']['merge_input'],
+                                                                      self._cfg['config_detail'][cfg]['repository_name'], 
+                                                                      self._cfg['config_detail'][cfg]['target_branch'],
+                                                                      bundle_info['file_name']
+                                                                     ))
 
-            fi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
-                                                             self._cfg['config_common']['git_path'] , 
-                                                             self._cfg['config_common']['git_option'],
-                                                             self._cfg['config_detail'][cfg]['path'],
-                                                             self._cfg['config_detail'][cfg]['target_branch']
-                                                            ))
+                # push changes to the remote repository
+                fi.write('\"{0}\" {1} {2} push \n\n'.format( 
+                                                            self._cfg['config_common']['git_path'] , 
+                                                            self._cfg['config_common']['git_option'],
+                                                            self._cfg['config_detail'][cfg]['path']
+                                                           ))
 
-
-
-            fi.write('\"{0}\" {1} {2} pull {3} {4}/{5}.bundle {6} \n\n'.format( 
-                                                                               self._cfg['config_common']['git_path'] , 
-                                                                               self._cfg['config_common']['git_option'],
-                                                                               self._cfg['config_detail'][cfg]['path'],
-                                                                               self._cfg['config_common']['merge_option'],
-                                                                               self._cfg['config_common']['merge_input'],
-                                                                               self._cfg['config_detail'][cfg]['repository_name'], 
-                                                                               self._cfg['config_detail'][cfg]['target_branch']
-                                                                              ))
-            """
 
         fo.close()
         fi.close()
 
 
-    def get_bundle_list(self, bundle_dir:str):
+    def get_bundle_list(self, bundle_dir:str) -> list:
         """ 
         Retrieves bundle file list.
         If there are multiple bundle files for the same repository and branch,
@@ -158,29 +173,33 @@ class gitbundlemng:
         Returns
         ----------
             bundle_info_list : list
-                list of bundle files 
+                list of bundle file information dictionary.
+                dictionary contents follows the return definition of the method parse_bundle_name()
         """
-        bundle_dir = "C:/Data/repo/git/test/bundle_test/1"
-
         bundle_files = glob.glob(bundle_dir + '/*.bundle')
         bundle_info_list  = []
 
         for bundle_file in bundle_files:
-            info = self.parse_bundle_name(bundle_file.replace(bundle_dir, '').replace('\\',''))
-            for bundle_info in bundle_info_list:
-                if    (bundle_info['repository_name'] == info['repository_name'])\
-                  and (bundle_info['branch_name']     == info['branch_name']):
-                    if int(bundle_info['time']) > int(info['time']):
-                        bundle_info_list[bundle_info_list.index(bundle_info)] = bundle_file
-                        break
-            else:
-                bundle_info_list.append(bundle_info)
+            file_name = bundle_file.replace(bundle_dir, '').replace('\\','')
+            info = self.parse_bundle_name(file_name)
+            try:
+                for bundle_info in bundle_info_list:
+                    if (    (bundle_info['repository_name'] == info['repository_name'])\
+                        and (bundle_info['branch_name']     == info['branch_name'])):
+
+                        if int(bundle_info['time']) > int(info['time']):
+                            bundle_info_list[bundle_info_list.index(bundle_info)] = bundle_file
+                            break
+                else:
+                    bundle_info_list.append(info)
+            except:
+                pass
 
         return bundle_info_list
 
 
 
-    def get_branch_name_in_bundle(self, bundle_file:str):
+    def get_branch_name_in_bundle(self, bundle_file:str) -> list:
         """ 
         Retrieves branch names and the corresponding SHA-1 (of the latest commits) in a bundle file
 
@@ -211,7 +230,7 @@ class gitbundlemng:
         return branch_list
 
         
-    def get_config(self):
+    def get_config(self) -> dict:
         """
         Retrieves the current list of gitbundle configurations for individual respositories.
 
@@ -223,7 +242,7 @@ class gitbundlemng:
         return self._cfg['config_detail']
 
 
-    def parse_bundle_name(self, bundle_name:str):
+    def parse_bundle_name(self, bundle_name:str) -> dict:
         """
         Parses bundle information in the file name of a bundle.
 
@@ -236,26 +255,26 @@ class gitbundlemng:
         ----------
         bundle_info : dict
             Bundle information. 
-            key = 'repository_name', 'branch_name', 'branch_origin' (commit hash id), 'branch_datetime' (yyyymmddHHMMSS)
+            key = 'repository_name', 'branch_name', 'branch_origin' (commit hash id), 'branch_datetime' (yyyymmddHHMMSS), 'bundle_file_name'
             bundle_info['branch_origin'] value of 'NOORIGIN' means there was no root commit found for the branch
         """
         bundle_info = {}
-        
-        bundle_name_sp = re.match('(.*).bundle', bundle_name).split('@')
+        bundle_name_sp = re.match('(.*).bundle', bundle_name).group().replace('.bundle', '').split('@')
 
-        assert len(bundle_name_sp)    == 4,  'Illegal bundle file name (1)'
-        assert len(bundle_name_sp[3]) == 12, 'Illegal bundle file name (2)'
+        assert len(bundle_name_sp)    == 4      ,  'Illegal bundle file name (1). len={0}'.format(len(bundle_name_sp))
+        assert len(bundle_name_sp[3]) == 14  or bundle_name_sp[3] == "NOORIGIN", 'Illegal bundle file name (2). len={0}'.format(len(bundle_name_sp[3]))
 
         bundle_info['repository_name'] = bundle_name_sp[0]
         bundle_info['branch_name']     = bundle_name_sp[1].replace('+', '/')
         bundle_info['branch_origin']   = bundle_name_sp[2]
         bundle_info['bundle_datetime'] = bundle_name_sp[3]
+        bundle_info['file_name']       = bundle_name
 
         return bundle_info
 
             
 
-    def make_bundlename(self, repository_name:str, branch_name:str, branch_origin:str):
+    def make_bundlename(self, repository_name:str, branch_name:str, branch_origin:str) -> str:
         """ 
         Generates bundle file name.
 
@@ -285,11 +304,12 @@ class gitbundlemng:
                 branch name of the bundle wherein "+" denotes "/", 
                 e.g. branch feature/func_1 being feature+func_1 
             <branch_origin>     : 
-                commit ID of the branch origin.
+                commit ID (complete HASH without abbreviation) of the branch origin.
                 NOORIGIN if there is no origin or the origin is not found
             <bundle_datetime>   : 
                 date and time of bundle generation (yyyymmddHHMMSS).
         """
+
         date_time_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime('%Y%m%d%H%M%S')
         bundle_name = "{0}@{1}@{2}@{3}.bundle".format(repository_name, 
                                                       branch_name.replace('/', '+'),
@@ -300,7 +320,7 @@ class gitbundlemng:
         return bundle_name
 
 
-    def is_my_repo(self, repo_no:str):
+    def is_my_repo(self, repo_no:str) -> bool:
         """
         Checks if the specified repository number denotes the respoistory to manage.
 

@@ -9,12 +9,9 @@ Basically built on python and designed specifically for synchronization of isola
 ## Using git_bundle_manage
 
 1. Configure gitbundle_config.json 
-
 2. Run make_bat.bat
-
 3. Bundle files for specified repositories and branches will be generated to the specified directory
-
-4. (TODO) Bundle files in the specified directory will be automatically merged to your repository.
+4. Bundle files in the specified directory will be automatically merged to your repository.
 
 ## Notes
 
@@ -29,15 +26,14 @@ Basically built on python and designed specifically for synchronization of isola
 | Python | version 3.9.2 |
 | GitPython | version 3.1.14 |
 
-
-
 ## History
 
+### Version 0.0.2
+
+* Added bundle merge support.
+* Added --tags to bundle output option example.
+
 ### Version 0.0.1
+
 * First release.
-
-#### Limitation
-* Bundle merge not implemented
-
-
 
