@@ -108,51 +108,55 @@ class gitbundlemng:
             bundle_info_list = self.get_bundle_list(self._cfg['config_common']['merge_input'])
 
             for bundle_info in bundle_info_list:
-                # Create and switch to the branch to modify if the branch doesn't exist. Just switch otherwise.
-                if gbr.find_branch(self._cfg['config_detail'][cfg]['path'], bundle_info['branch_name']):
-                    fi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
-                                                                     self._cfg['config_common']['git_path'] , 
-                                                                     self._cfg['config_common']['git_option'],
-                                                                     self._cfg['config_detail'][cfg]['path'],
-                                                                     bundle_info['branch_name']
-                                                                    ))
+                if bundle_info['repository_name'] == self._cfg['config_detail'][cfg]['repository_name']:
+                    # Create and switch to the branch to modify if the branch doesn't exist. Just switch otherwise.
+                    if gbr.find_branch(self._cfg['config_detail'][cfg]['path'], bundle_info['branch_name']):
+                        fi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
+                                                                         self._cfg['config_common']['git_path'] , 
+                                                                         self._cfg['config_common']['git_option'],
+                                                                         self._cfg['config_detail'][cfg]['path'],
+                                                                         bundle_info['branch_name']
+                                                                        ))
+                    else:
+                        fi.write('\"{0}\" {1} {2} checkout {3} -b {4} \n'.format( 
+                                                                                 self._cfg['config_common']['git_path'] , 
+                                                                                 self._cfg['config_common']['git_option'],
+                                                                                 self._cfg['config_detail'][cfg]['path'],
+                                                                                 bundle_info['branch_origin'],
+                                                                                 bundle_info['branch_name']
+                                                                                ))
+
+                    # fetch bundle content 
+                    fi.write('\"{0}\" {1} {2} fetch {3} {4}/{5}.bundle HEAD\n'.format( 
+                                                                                      self._cfg['config_common']['git_path'] , 
+                                                                                      self._cfg['config_common']['git_option'],
+                                                                                      self._cfg['config_detail'][cfg]['path'],
+                                                                                      self._cfg['config_common']['merge_input'],
+                                                                                      self._cfg['config_detail'][cfg]['repository_name'], 
+                                                                                      self._cfg['config_detail'][cfg]['target_branch'],
+                                                                                      bundle_info['file_name']
+                                                                                     ))
+                                                                                    
+                    # merge bundle content
+                    fi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
+                                                                          self._cfg['config_common']['git_path'] , 
+                                                                          self._cfg['config_common']['git_option'],
+                                                                          self._cfg['config_detail'][cfg]['path'],
+                                                                          self._cfg['config_common']['merge_input'],
+                                                                          self._cfg['config_detail'][cfg]['repository_name'], 
+                                                                          self._cfg['config_detail'][cfg]['target_branch'],
+                                                                          bundle_info['file_name']
+                                                                          ))
+
+                    # push changes to the remote repository
+                    fi.write('\"{0}\" {1} {2} push \n\n'.format( 
+                                                                self._cfg['config_common']['git_path'] , 
+                                                                self._cfg['config_common']['git_option'],
+                                                                self._cfg['config_detail'][cfg]['path']
+                                                               ))
                 else:
-                    fi.write('\"{0}\" {1} {2} checkout {3} -b {4} \n'.format( 
-                                                                             self._cfg['config_common']['git_path'] , 
-                                                                             self._cfg['config_common']['git_option'],
-                                                                             self._cfg['config_detail'][cfg]['path'],
-                                                                             bundle_info['branch_origin'],
-                                                                             bundle_info['branch_name']
-                                                                            ))
-
-                # fetch bundle content 
-                fi.write('\"{0}\" {1} {2} fetch {3} {4}/{5}.bundle HEAD\n'.format( 
-                                                                                  self._cfg['config_common']['git_path'] , 
-                                                                                  self._cfg['config_common']['git_option'],
-                                                                                  self._cfg['config_detail'][cfg]['path'],
-                                                                                  self._cfg['config_common']['merge_input'],
-                                                                                  self._cfg['config_detail'][cfg]['repository_name'], 
-                                                                                  self._cfg['config_detail'][cfg]['target_branch'],
-                                                                                  bundle_info['file_name']
-                                                                                 ))
-                                                                                   
-                # merge bundle content
-                fi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
-                                                                      self._cfg['config_common']['git_path'] , 
-                                                                      self._cfg['config_common']['git_option'],
-                                                                      self._cfg['config_detail'][cfg]['path'],
-                                                                      self._cfg['config_common']['merge_input'],
-                                                                      self._cfg['config_detail'][cfg]['repository_name'], 
-                                                                      self._cfg['config_detail'][cfg]['target_branch'],
-                                                                      bundle_info['file_name']
-                                                                     ))
-
-                # push changes to the remote repository
-                fi.write('\"{0}\" {1} {2} push \n\n'.format( 
-                                                            self._cfg['config_common']['git_path'] , 
-                                                            self._cfg['config_common']['git_option'],
-                                                            self._cfg['config_detail'][cfg]['path']
-                                                           ))
+                    # Skip bundle merge if bundle is not for the target repository 
+                    continue
 
 
         fo.close()
@@ -219,7 +223,7 @@ class gitbundlemng:
             while True:
                 line = frb.readline().decode().replace('\n', '')
                 if re.match("^#\s", line):
-                    # skip the fisrst (header) line
+                    # skip the first (header) line
                     continue
                 else:
                     if line == '':
