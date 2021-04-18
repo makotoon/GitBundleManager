@@ -51,9 +51,9 @@ class gitbundlemng:
 
     def __init__(self, cfg_file:str):
         # Read json configurations file specified by the first argument
-        f = open(cfg_file, 'r')
-        self._cfg = json.load(f)
-        f.close()
+        fr = open(cfg_file, 'r')
+        self._cfg = json.load(fr)
+        fr.close()
 
 
     def create_batch(self):
@@ -64,36 +64,42 @@ class gitbundlemng:
         self.__create_dir(self._cfg['config_common']['batch_output'])
         self.__create_dir(self._cfg['config_common']['bundle_output'])
 
-        fo = open("{0}/git_bundle_out.bat".format(self._cfg['config_common']['batch_output']), "w")
-        fi = open("{0}/git_bundle_in.bat".format(self._cfg['config_common']['batch_output']), "w")
+        fwo = open("{0}/git_bundle_out.bat".format(self._cfg['config_common']['batch_output']), "w")
+        fwi = open("{0}/git_bundle_in.bat".format(self._cfg['config_common']['batch_output']), "w")
         
         gbr=gitbundle.gitrepo()
 
         for cfg in self._cfg['config_detail'].keys():
+            if self._cfg['config_detail'][cfg]['branch_origin'] == '':
+                branch_origin =  gbr.find_branch_origin( self._cfg['config_detail'][cfg]['path'] , 
+                                                         self._cfg['config_detail'][cfg]['target_branch'] )
+            else:
+                branch_origin = self._cfg['config_detail'][cfg]['branch_origin']
+
             ### Bundle output batch generation 
-            fo.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
+            fwo.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
             
 
-            fo.write('\"{0}\" {1} {2} checkout {3} \n'.format( 
+            fwo.write('\"{0}\" {1} {2} checkout {3} \n'.format( 
                                                               self._cfg['config_common']['git_path'] , 
                                                               self._cfg['config_common']['git_option'],
                                                               self._cfg['config_detail'][cfg]['path'],
                                                               self._cfg['config_detail'][cfg]['target_branch']
                                                              ))
 
-            fo.write('\"{0}\" {1} {2} pull \n'.format( 
+            fwo.write('\"{0}\" {1} {2} pull \n'.format( 
                                                       self._cfg['config_common']['git_path'] , 
                                                       self._cfg['config_common']['git_option'],
                                                       self._cfg['config_detail'][cfg]['path']
-                                                     ))
+                                                      ))
                                                      
             bundle_name   =  self.make_bundlename(
                                                   self._cfg['config_detail'][cfg]['repository_name'], 
                                                   self._cfg['config_detail'][cfg]['target_branch'],
-                                                  gbr.find_branch_origin( self._cfg['config_detail'][cfg]['path'] , 
-                                                                          self._cfg['config_detail'][cfg]['target_branch'] ))
+                                                  branch_origin
+                                                 )
             
-            fo.write('\"{0}\" {1} {2} bundle create {3}/{4} {5} {6} \n\n'.format( 
+            fwo.write('\"{0}\" {1} {2} bundle create {3}/{4} {5} {6} \n\n'.format( 
                                                                                  self._cfg['config_common']['git_path'] , 
                                                                                  self._cfg['config_common']['git_option'],
                                                                                  self._cfg['config_detail'][cfg]['path'],
@@ -102,7 +108,6 @@ class gitbundlemng:
                                                                                  self._cfg['config_common']['bundle_option'],
                                                                                  self._cfg['config_detail'][cfg]['target_branch']
                                                                                  ))
-
             
             ### Bundle input batch generation 
             bundle_info_list = self.get_bundle_list(self._cfg['config_common']['merge_input'])
@@ -111,14 +116,14 @@ class gitbundlemng:
                 if bundle_info['repository_name'] == self._cfg['config_detail'][cfg]['repository_name']:
                     # Create and switch to the branch to modify if the branch doesn't exist. Just switch otherwise.
                     if gbr.find_branch(self._cfg['config_detail'][cfg]['path'], bundle_info['branch_name']):
-                        fi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
+                        fwi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
                                                                          self._cfg['config_common']['git_path'] , 
                                                                          self._cfg['config_common']['git_option'],
                                                                          self._cfg['config_detail'][cfg]['path'],
                                                                          bundle_info['branch_name']
                                                                         ))
                     else:
-                        fi.write('\"{0}\" {1} {2} checkout {3} -b {4} \n'.format( 
+                        fwi.write('\"{0}\" {1} {2} checkout {3} -b {4} \n'.format( 
                                                                                  self._cfg['config_common']['git_path'] , 
                                                                                  self._cfg['config_common']['git_option'],
                                                                                  self._cfg['config_detail'][cfg]['path'],
@@ -127,7 +132,7 @@ class gitbundlemng:
                                                                                 ))
 
                     # fetch bundle content 
-                    fi.write('\"{0}\" {1} {2} fetch {3} {4}/{5}.bundle HEAD\n'.format( 
+                    fwi.write('\"{0}\" {1} {2} fetch {3} {4}/{5}.bundle HEAD\n'.format( 
                                                                                       self._cfg['config_common']['git_path'] , 
                                                                                       self._cfg['config_common']['git_option'],
                                                                                       self._cfg['config_detail'][cfg]['path'],
@@ -138,7 +143,7 @@ class gitbundlemng:
                                                                                      ))
                                                                                     
                     # merge bundle content
-                    fi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
+                    fwi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
                                                                           self._cfg['config_common']['git_path'] , 
                                                                           self._cfg['config_common']['git_option'],
                                                                           self._cfg['config_detail'][cfg]['path'],
@@ -149,7 +154,7 @@ class gitbundlemng:
                                                                           ))
 
                     # push changes to the remote repository
-                    fi.write('\"{0}\" {1} {2} push \n\n'.format( 
+                    fwi.write('\"{0}\" {1} {2} push \n\n'.format( 
                                                                 self._cfg['config_common']['git_path'] , 
                                                                 self._cfg['config_common']['git_option'],
                                                                 self._cfg['config_detail'][cfg]['path']
@@ -158,9 +163,8 @@ class gitbundlemng:
                     # Skip bundle merge if bundle is not for the target repository 
                     continue
 
-
-        fo.close()
-        fi.close()
+        fwo.close()
+        fwi.close()
 
 
     def get_bundle_list(self, bundle_dir:str) -> list:
@@ -200,7 +204,6 @@ class gitbundlemng:
                 pass
 
         return bundle_info_list
-
 
 
     def get_branch_name_in_bundle(self, bundle_file:str) -> list:
