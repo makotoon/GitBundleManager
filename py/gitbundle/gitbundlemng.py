@@ -132,25 +132,22 @@ class gitbundlemng:
                                                                                 ))
 
                     # fetch bundle content 
-                    fwi.write('\"{0}\" {1} {2} fetch {3} {4}/{5}.bundle HEAD\n'.format( 
+                    fwi.write('\"{0}\" {1} {2} fetch {3} {4}/{5} {6}\n'.format( 
                                                                                       self._cfg['config_common']['git_path'] , 
                                                                                       self._cfg['config_common']['git_option'],
                                                                                       self._cfg['config_detail'][cfg]['path'],
+                                                                                      "",
+                                                                                      #self._cfg['config_common']['fetch_option'],
                                                                                       self._cfg['config_common']['merge_input'],
-                                                                                      self._cfg['config_detail'][cfg]['repository_name'], 
+                                                                                      bundle_info['file_name'],
                                                                                       self._cfg['config_detail'][cfg]['target_branch'],
-                                                                                      bundle_info['file_name']
                                                                                      ))
                                                                                     
                     # merge bundle content
                     fwi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
                                                                           self._cfg['config_common']['git_path'] , 
                                                                           self._cfg['config_common']['git_option'],
-                                                                          self._cfg['config_detail'][cfg]['path'],
-                                                                          self._cfg['config_common']['merge_input'],
-                                                                          self._cfg['config_detail'][cfg]['repository_name'], 
-                                                                          self._cfg['config_detail'][cfg]['target_branch'],
-                                                                          bundle_info['file_name']
+                                                                          self._cfg['config_detail'][cfg]['path']
                                                                           ))
 
                     # push changes to the remote repository
