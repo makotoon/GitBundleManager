@@ -69,6 +69,9 @@ class gitbundlemng:
         
         gbr=gitbundle.gitrepo()
 
+        fwo.write('set PATH={0};%PATH%', self._cfg['config_common']['git_path'])
+        fwi.write('set PATH={0};%PATH%', self._cfg['config_common']['git_path'])
+
         for cfg in self._cfg['config_detail'].keys():
             if self._cfg['config_detail'][cfg]['branch_origin'] == '':
                 branch_origin =  gbr.find_branch_origin( self._cfg['config_detail'][cfg]['path'] , 
@@ -80,18 +83,16 @@ class gitbundlemng:
             fwo.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
             
 
-            fwo.write('\"{0}\" {1} {2} checkout {3} \n'.format( 
-                                                              self._cfg['config_common']['git_path'] , 
-                                                              self._cfg['config_common']['git_option'],
-                                                              self._cfg['config_detail'][cfg]['path'],
-                                                              self._cfg['config_detail'][cfg]['target_branch']
-                                                             ))
+            fwo.write('git {0} {1} checkout {2} \n'.format( 
+                                                           self._cfg['config_common']['git_option'],
+                                                           self._cfg['config_detail'][cfg]['path'],
+                                                           self._cfg['config_detail'][cfg]['target_branch']
+                                                          ))
 
-            fwo.write('\"{0}\" {1} {2} pull \n'.format( 
-                                                      self._cfg['config_common']['git_path'] , 
-                                                      self._cfg['config_common']['git_option'],
-                                                      self._cfg['config_detail'][cfg]['path']
-                                                      ))
+            fwo.write('git {0} {1} pull \n'.format( 
+                                                   self._cfg['config_common']['git_option'],
+                                                   self._cfg['config_detail'][cfg]['path']
+                                                   ))
                                                      
             bundle_name   =  self.make_bundlename(
                                                   self._cfg['config_detail'][cfg]['repository_name'], 
@@ -99,15 +100,14 @@ class gitbundlemng:
                                                   branch_origin
                                                  )
             
-            fwo.write('\"{0}\" {1} {2} bundle create {3}/{4} {5} {6} \n\n'.format( 
-                                                                                 self._cfg['config_common']['git_path'] , 
-                                                                                 self._cfg['config_common']['git_option'],
-                                                                                 self._cfg['config_detail'][cfg]['path'],
-                                                                                 self._cfg['config_common']['bundle_output'],
-                                                                                 bundle_name,
-                                                                                 self._cfg['config_common']['bundle_option'],
-                                                                                 self._cfg['config_detail'][cfg]['target_branch']
-                                                                                 ))
+            fwo.write('git {0} {1} bundle create {2}/{3} {4} {5} \n\n'.format(  
+                                                                              self._cfg['config_common']['git_option'],
+                                                                              self._cfg['config_detail'][cfg]['path'],
+                                                                              self._cfg['config_common']['bundle_output'],
+                                                                              bundle_name,
+                                                                              self._cfg['config_common']['bundle_option'],
+                                                                              self._cfg['config_detail'][cfg]['target_branch']
+                                                                              ))
             
             ### Bundle input batch generation 
             bundle_info_list = self.get_bundle_list(self._cfg['config_common']['merge_input'])
@@ -116,46 +116,41 @@ class gitbundlemng:
                 if bundle_info['repository_name'] == self._cfg['config_detail'][cfg]['repository_name']:
                     # Create and switch to the branch to modify if the branch doesn't exist. Just switch otherwise.
                     if gbr.find_branch(self._cfg['config_detail'][cfg]['path'], bundle_info['branch_name']):
-                        fwi.write('\"{0}\" {1} {2} checkout {3}\n'.format( 
-                                                                         self._cfg['config_common']['git_path'] , 
-                                                                         self._cfg['config_common']['git_option'],
-                                                                         self._cfg['config_detail'][cfg]['path'],
-                                                                         bundle_info['branch_name']
-                                                                        ))
+                        fwi.write('git {0} {1} checkout {2}\n'.format( 
+                                                                      self._cfg['config_common']['git_option'],
+                                                                      self._cfg['config_detail'][cfg]['path'],
+                                                                      bundle_info['branch_name']
+                                                                     ))
                     else:
-                        fwi.write('\"{0}\" {1} {2} checkout {3} -b {4} \n'.format( 
-                                                                                 self._cfg['config_common']['git_path'] , 
-                                                                                 self._cfg['config_common']['git_option'],
-                                                                                 self._cfg['config_detail'][cfg]['path'],
-                                                                                 bundle_info['branch_origin'],
-                                                                                 bundle_info['branch_name']
-                                                                                ))
+                        fwi.write('git {0} {1} checkout {2} -b {3} \n'.format( 
+                                                                              self._cfg['config_common']['git_option'],
+                                                                              self._cfg['config_detail'][cfg]['path'],
+                                                                              bundle_info['branch_origin'],
+                                                                              bundle_info['branch_name']
+                                                                             ))
 
                     # fetch bundle content 
-                    fwi.write('\"{0}\" {1} {2} fetch {3} {4}/{5} {6}\n'.format( 
-                                                                                      self._cfg['config_common']['git_path'] , 
-                                                                                      self._cfg['config_common']['git_option'],
-                                                                                      self._cfg['config_detail'][cfg]['path'],
-                                                                                      "",
-                                                                                      #self._cfg['config_common']['fetch_option'],
-                                                                                      self._cfg['config_common']['merge_input'],
-                                                                                      bundle_info['file_name'],
-                                                                                      self._cfg['config_detail'][cfg]['target_branch'],
-                                                                                     ))
+                    fwi.write('git {0} {1} fetch {2} {3}/{4} {5}\n'.format( 
+                                                                           self._cfg['config_common']['git_option'],
+                                                                           self._cfg['config_detail'][cfg]['path'],
+                                                                           "",
+                                                                           #self._cfg['config_common']['fetch_option'],
+                                                                           self._cfg['config_common']['merge_input'],
+                                                                           bundle_info['file_name'],
+                                                                           self._cfg['config_detail'][cfg]['target_branch'],
+                                                                           ))
                                                                                     
                     # merge bundle content
-                    fwi.write('\"{0}\" {1} {2} merge FETCH_HEAD \n'.format( 
-                                                                          self._cfg['config_common']['git_path'] , 
-                                                                          self._cfg['config_common']['git_option'],
-                                                                          self._cfg['config_detail'][cfg]['path']
-                                                                          ))
+                    fwi.write('git {1} {2} merge FETCH_HEAD \n'.format( 
+                                                                       self._cfg['config_common']['git_option'],
+                                                                       self._cfg['config_detail'][cfg]['path']
+                                                                      ))
 
                     # push changes to the remote repository
-                    fwi.write('\"{0}\" {1} {2} push \n\n'.format( 
-                                                                self._cfg['config_common']['git_path'] , 
-                                                                self._cfg['config_common']['git_option'],
-                                                                self._cfg['config_detail'][cfg]['path']
-                                                               ))
+                    fwi.write('git {1} {2} push \n\n'.format( 
+                                                             self._cfg['config_common']['git_option'],
+                                                             self._cfg['config_detail'][cfg]['path']
+                                                            ))
                 else:
                     # Skip bundle merge if bundle is not for the target repository 
                     continue
