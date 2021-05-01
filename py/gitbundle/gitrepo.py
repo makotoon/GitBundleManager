@@ -33,7 +33,7 @@ class gitrepo:
     This is a simple module to handle minor operations using GitPython.
     """
 
-    def find_branch_origin(self, repo_path, branch_name):
+    def find_branch_origin(self, repo_path, branch_name) -> str:
         """
         Finds the HASH ID (SHA-1) of the commit from which a specified branch originated.
 
@@ -72,7 +72,7 @@ class gitrepo:
         return commit_id_origin
         
 
-    def find_branch(self, repo_path:str, branch_name:str):
+    def find_branch(self, repo_path:str, branch_name:str) -> bool:
         """
         Finds if specified branch exists in the specified repository.
         
@@ -100,7 +100,7 @@ class gitrepo:
         return exist
 
         
-    def find_commit_id(self, repo_path:str, commit_id:str):
+    def find_commit_id(self, repo_path:str, commit_id:str) -> bool:
         """
         Finds if specified branch exists in the specified repository.
         
@@ -126,5 +126,6 @@ class gitrepo:
             exist = False
 
         return exist
+
 
 
