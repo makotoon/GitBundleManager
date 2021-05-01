@@ -69,8 +69,8 @@ class gitbundlemng:
         
         gbr=gitbundle.gitrepo()
 
-        fwo.write('set PATH={0};%PATH%', self._cfg['config_common']['git_path'])
-        fwi.write('set PATH={0};%PATH%', self._cfg['config_common']['git_path'])
+        fwo.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
+        fwi.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
 
         for cfg in self._cfg['config_detail'].keys():
             if self._cfg['config_detail'][cfg]['branch_origin'] == '':
