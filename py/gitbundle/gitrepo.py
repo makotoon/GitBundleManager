@@ -25,6 +25,7 @@
 
 import git
 import re
+from git import repo
  
 class gitrepo:
     """
@@ -128,6 +129,42 @@ class gitrepo:
         return exist
 
 
+    def update_repository(self, repo_path:str) -> None:
+        """
+        Updates local repository according to the latest remote repository state.
+        
+        Parameters
+        ----------
+            repo_path : str
+                Directory path to the repository.
+        """
+        self.update_remote_branch_info(repo_path)
+        remote_branch_list = self.get_remote_branch_list(repo_path)
+        local_branch_list  = self.get_local_branch_list(repo_path)
+        self.delete_remotely_deleted_branch(repo_path, remote_branch_list, local_branch_list)
+        self.add_remotely_added_branch(repo_path, remote_branch_list, local_branch_list)
+        
+
+    def update_remote_branch_info(self, repo_path:str) -> None:
+        """
+        Updates branch information of local repository according to the latest remote repository, i.e.
+        deletes remotely deleted branches and add remotely added branches.
+        
+        Parameters
+        ----------
+            repo_path : str
+                Directory path to the repository.
+        """
+        repo        = git.Repo(repo_path)
+        
+        repo.git.fetch('--prune')
+        # the commmand return contains deleted branch information which can be used for
+        # local branch management (removal) 
+
+        # @TODO: for tag removal. 
+        #repo.git.fetch("remotes/origin", "--prune", "'refs/tags/*:refs/tags/*'")
+
+
     def get_remote_branch_list(self, repo_path:str) -> list:
         """
         Retrieves latest list of branches in remote repository.
@@ -144,9 +181,10 @@ class gitrepo:
         """
         repo        = git.Repo(repo_path)
         remote_branch_list = repo.git.branch('-r').replace('\r\n','\n').replace('* ','').replace(' ','').split('\n')
-        for remote_branch in remote_branch_list:
-            if re.search(r'HEAD', remote_branch):
-               del remote_branch_list[remote_branch_list.index(remote_branch)]
+        for i in range(len(remote_branch_list)):
+            remote_branch_list[i] = 'remotes/' + remote_branch_list[i]
+            if re.search(r'HEAD', remote_branch_list[i]):
+               del remote_branch_list[i]
 
         return remote_branch_list
 
@@ -174,33 +212,10 @@ class gitrepo:
         return local_branch_list
 
 
-    def update_branch_info(self, repo_path:str) -> None:
-        """
-        Updates branch information of local repository according to the latest remote repository, i.e.
-        deletes remotely deleted branches and add remotely added branches.
-        
-        Parameters
-        ----------
-            repo_path : str
-                Directory path to the repository.
-
-        Returns
-        ----------
-            exist : bool
-                True if specified branch exists in the repository. False otherwise.
-        """
-        
-        repo        = git.Repo(repo_path)
-        
-        repo.git.pull('--prune')
-        # the commmand return contains deleted branch information which can be used for
-        # local branch management (removal) 
-
 
     def delete_remotely_deleted_branch(self, repo_path:str, remote_branch_list:list, local_branch_list:list) -> None:
         """
-        Updates branch information of local repository according to the latest remote repository, i.e.
-        deletes remotely deleted branches and add remotely added branches.
+        Delete branches that don't exist in remote repository.
         
         Parameters
         ----------
@@ -210,15 +225,20 @@ class gitrepo:
                 list of local branches
             local_branch_list : list
                 list of local branches
-        """
+        """        
+        repo        = git.Repo(repo_path)
         
-        # to be implemented
-
+        for local_branch in local_branch_list:
+            for remote_branch in remote_branch_list:
+                if remote_branch == 'remotes/origin/' + local_branch:
+                    pass
+                else:
+                    repo.git.branch('-d', local_branch)
+                    
         
     def add_remotely_added_branch(self, repo_path:str, remote_branch_list:list, local_branch_list:list) -> None:
         """
-        Updates branch information of local repository according to the latest remote repository, i.e.
-        deletes remotely deleted branches and add remotely added branches.
+        Adds/creates branches that only exists in remote repository.
         
         Parameters
         ----------
@@ -229,7 +249,14 @@ class gitrepo:
             local_branch_list : list
                 list of local branches
         """
+        repo        = git.Repo(repo_path)
         
-        # to be implemented
+        for remote_branch in remote_branch_list:
+            for local_branch in local_branch_list:
+                if remote_branch == 'remotes/origin/' + local_branch:
+                    pass
+                else:
+                    repo.git.checkout('-b', local_branch, remote_branch)
+                    
 
 

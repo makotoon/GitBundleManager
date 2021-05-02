@@ -73,6 +73,8 @@ class gitbundlemng:
         fwi.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
 
         for cfg in self._cfg['config_detail'].keys():
+            gbr.update_repository(self._cfg['config_detail'][cfg]['path'])
+
             if self._cfg['config_detail'][cfg]['branch_origin'] == '':
                 branch_origin =  gbr.find_branch_origin( self._cfg['config_detail'][cfg]['path'] , 
                                                          self._cfg['config_detail'][cfg]['target_branch'] )
