@@ -27,7 +27,7 @@ import git
 import re
 from git import repo
  
-class gitrepo:
+class GitRepo:
     """
     Git repository manager module.
 

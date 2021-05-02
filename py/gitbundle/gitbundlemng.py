@@ -30,7 +30,7 @@ import glob
 import datetime
 import gitbundle
 
-class gitbundlemng:
+class GitBundleMng:
     """
     Git bundle manager module.
 
@@ -56,6 +56,15 @@ class gitbundlemng:
         fr.close()
 
 
+    def update_repo(self):
+        """ 
+        Updates local repsoitory following latest remote repository status
+        """
+        gbr = gitbundle.GitRepo()
+        for cfg in self._cfg['config_detail'].keys():
+            gbr.update_repository(self._cfg['config_detail'][cfg]['path'])
+
+
     def create_batch(self):
         """ 
         Creates windows batch files for repository synchronization.
@@ -67,14 +76,12 @@ class gitbundlemng:
         fwo = open("{0}/git_bundle_out.bat".format(self._cfg['config_common']['batch_output']), "w")
         fwi = open("{0}/git_bundle_in.bat".format(self._cfg['config_common']['batch_output']), "w")
         
-        gbr=gitbundle.gitrepo()
+        gbr = gitbundle.GitRepo()
 
         fwo.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
         fwi.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
 
         for cfg in self._cfg['config_detail'].keys():
-            gbr.update_repository(self._cfg['config_detail'][cfg]['path'])
-
             if self._cfg['config_detail'][cfg]['branch_origin'] == '':
                 branch_origin =  gbr.find_branch_origin( self._cfg['config_detail'][cfg]['path'] , 
                                                          self._cfg['config_detail'][cfg]['target_branch'] )

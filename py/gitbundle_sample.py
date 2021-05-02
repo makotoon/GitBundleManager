@@ -27,11 +27,15 @@ import gitbundle
 
 def main():
     gbm_cfg = sys.argv[1]
-    gbm     = gitbundle.gitbundlemng(gbm_cfg)
-    #gbr     = gitbundle.gitrepo()
+    gbm     = gitbundle.GitBundleMng(gbm_cfg)
 
-    if(sys.argv[2] == "--mode=genbat"):
-       gbm.create_batch()
+    if len(sys.argv) > 2:
+       for arg in sys.argv[2:]:
+         if(arg == "--update-repo"):
+            gbm.update_repo()
+
+         if(arg == "--mode=genbat"):
+            gbm.create_batch()
 
 
 if __name__=='__main__':
