@@ -1,4 +1,4 @@
-# git_bundle_manager
+# GitBundleManager
 
 ##  Summary
 
@@ -6,7 +6,7 @@ Simple toolkit for git repository management on Windows.
 
 Basically built on python and designed specifically for synchronization of isolated git repository pairs.  An "isolated git repository pair" here means a pair of git repositories that don't have direct access to each other but need to synchronize. Repository management in such restricted environments can be troublesome depending on the frequency of synchronization and the number of repositories. This tool kit utilizes the [git bundle command](https://git-scm.com/docs/git-bundle)  and aims to make repository synchronization easier (even a tad!) .
 
-## Using git_bundle_manage
+## Using GitBundleManager
 
 1. Configure gitbundle_config.json 
 2. Run make_bat.bat
