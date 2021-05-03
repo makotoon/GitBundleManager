@@ -1,4 +1,4 @@
-# git_bundle_manager
+# GitBundleManager
 
 ##  Summary
 
@@ -9,11 +9,11 @@ Basically built on python and designed specifically for synchronization of isola
 ## Features
 
 * Automated bundle output according to json configurations
-* Automated bundle merge/push <br> Note: Requires to use git_bundle_manager for both bundle output and bundle merge
+* Automated bundle merge/push <br> Note: To use this feature, employ GitBundleManager for both bundle output and bundle merge
 * Multiple repository/branch support
 
 
-## Using git_bundle_manage
+## Using GitBundleManager
 
 1. Configure gitbundle_config.json 
 2. Run make_bat.bat
