@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # gitbundle/gitrepo.py
-# (https://github.com/makotoon/git_bundle_manager)
+# (https://github.com/makotoon/GitBundleManager)
 #
 # ======================================================================================
 # Copyright (c) 2021 Makoto Maeda

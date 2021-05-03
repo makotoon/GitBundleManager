@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # gitbundle_sample.py
-# (https://github.com/makotoon/git_bundle_manager)
+# (https://github.com/makotoon/GitBundleManager)
 #
 # ======================================================================================
 # Copyright (c) 2021 Makoto Maeda
@@ -30,12 +30,14 @@ def main():
     gbm     = gitbundle.GitBundleMng(gbm_cfg)
 
     if len(sys.argv) > 2:
-       for arg in sys.argv[2:]:
-         if(arg == "--update-repo"):
-            gbm.update_repo()
+       if "--update-repo" in sys.argv[2:]:
+          gbm.update_repo()
 
-         if(arg == "--mode=genbat"):
-            gbm.create_batch()
+       if "--mode=genbat" in sys.argv[2:]:
+          gbm.create_batch(mode="bat")
+          
+       if "--mode=genbash" in sys.argv[2:]:
+          gbm.create_batch(mode="sh")
 
 
 if __name__=='__main__':

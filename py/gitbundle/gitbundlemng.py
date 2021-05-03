@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # gitbundle/gitbundlemng.py
-# (https://github.com/makotoon/git_bundle_manager)
+# (https://github.com/makotoon/GitBundleManager)
 #
 # ======================================================================================
 # Copyright (c) 2021 Makoto Maeda
@@ -65,21 +65,41 @@ class GitBundleMng:
             gbr.update_repository(self._cfg['config_detail'][cfg]['path'])
 
 
-    def create_batch(self):
+    def create_batch(self, mode:str="sh"):
         """ 
-        Creates windows batch files for repository synchronization.
-        """
+        Creates windows batch or bash script files for repository synchronization.
 
+        Parameters
+        ----------
+            mode : str
+                "bat" for windows batch
+                "sh" for bash script
+        """
+        assert mode in {"sh", "bat"}, "invalid output mode mode specified"
+
+        self.create_batch_in(mode=mode)
+        self.create_batch_out(mode=mode)
+    
+
+    def create_batch_out(self, mode="bat"):
+        """ 
+        Creates windows batch or bash script files for repository synchronization (bundle output).
+
+        Parameters
+        ----------
+            mode : str
+                "sh" for bash script
+                "bat" for windows batch
+        """
+        assert mode in {"sh", "bat"}, "invalid output mode mode specified"
+
+        gbr = gitbundle.GitRepo()
         self.__create_dir(self._cfg['config_common']['batch_output'])
         self.__create_dir(self._cfg['config_common']['bundle_output'])
 
-        fwo = open("{0}/git_bundle_out.bat".format(self._cfg['config_common']['batch_output']), "w")
-        fwi = open("{0}/git_bundle_in.bat".format(self._cfg['config_common']['batch_output']), "w")
-        
-        gbr = gitbundle.GitRepo()
-
-        fwo.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
-        fwi.write('set PATH={0};%PATH%'.format(self._cfg['config_common']['git_path']))
+        fwo = open("{0}/git_bundle_out.{1}".format(self._cfg['config_common']['batch_output'], mode), "w")
+        if self._cfg['config_common']['git_path'] != "":
+            fwo.write('{0}'.format(self.__create_path_config(self._cfg['config_common']['git_path'], mode)))
 
         for cfg in self._cfg['config_detail'].keys():
             if self._cfg['config_detail'][cfg]['branch_origin'] == '':
@@ -87,11 +107,7 @@ class GitBundleMng:
                                                          self._cfg['config_detail'][cfg]['target_branch'] )
             else:
                 branch_origin = self._cfg['config_detail'][cfg]['branch_origin']
-
-            ### Bundle output batch generation 
-            fwo.write('@rem ### git bundle commands for {0} \n'.format( cfg ))
-            
-
+        
             fwo.write('git {0} {1} checkout {2} \n'.format( 
                                                            self._cfg['config_common']['git_option'],
                                                            self._cfg['config_detail'][cfg]['path'],
@@ -117,8 +133,31 @@ class GitBundleMng:
                                                                               self._cfg['config_common']['bundle_option'],
                                                                               self._cfg['config_detail'][cfg]['target_branch']
                                                                               ))
-            
-            ### Bundle input batch generation 
+
+        fwo.close()
+
+
+    def create_batch_in(self, mode="bat"):
+        """ 
+        Creates windows batch or bash script files for repository synchronization (bundle merge).
+
+        Parameters
+        ----------
+            mode : str
+                "bat" for windows batch
+                "sh" for bash script
+        """
+        assert mode in {"sh", "bat"}, "invalid output mode mode specified"
+
+        gbr = gitbundle.GitRepo()
+        self.__create_dir(self._cfg['config_common']['batch_output'])
+
+        fwi = open("{0}/git_bundle_out.{1}".format(self._cfg['config_common']['batch_output'], mode), "w")
+        
+        if self._cfg['config_common']['git_path'] != "":
+            fwi.write('{0}'.format(self.__create_path_config(self._cfg['config_common']['git_path'], mode)))
+
+        for cfg in self._cfg['config_detail'].keys():
             bundle_info_list = self.get_bundle_list(self._cfg['config_common']['merge_input'])
 
             for bundle_info in bundle_info_list:
@@ -163,9 +202,9 @@ class GitBundleMng:
                 else:
                     # Skip bundle merge if bundle is not for the target repository 
                     continue
-
-        fwo.close()
+                
         fwi.close()
+
 
 
     def get_bundle_list(self, bundle_dir:str) -> list:
@@ -350,8 +389,44 @@ class GitBundleMng:
         return is_my_repo
 
 
-    def __create_dir(self, dir_path):
+    def __create_dir(self, dir_path:str) -> None:
+        """ 
+        Creates directory
+
+        Parameters
+        ----------
+            dir_path : str
+                Path of directory to create
+        """
         if os.path.isdir(dir_path):
             pass
         else:    
             os.makedirs(dir_path, exist_ok=False)
+
+
+    def __create_path_config(self, path:str, mode:str) -> str:
+        """ 
+        Creates path command
+
+        Parameters
+        ----------
+            path : str
+                path to add
+            mode : str
+                command mode
+                "bat" for windows batch
+                "sh" for bash
+
+        Returns
+        ----------
+            path_cmd : str
+                Command to add path
+        """
+        assert mode in {"sh", "bat"}, "invalid output mode mode specified"
+
+        if mode in {"sh"}:
+            path_cmd = f"export PATH={path}:$PATH"
+        elif mode in {"bat"}:
+            path_cmd = f"set PATH={path};%PATH%"
+
+        return path_cmd
